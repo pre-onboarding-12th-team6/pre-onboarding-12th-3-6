@@ -7,6 +7,8 @@
 
 [배포 링크](https://clinical-trials-398306.du.r.appspot.com/)
 
+> ❗️json서버를 배포해 사용중입니다. 서버에 트래픽이 없을 경우 sleep상태로 변경되기 때문에 요청실패가 발생할 수 있습니다. 요청에 실패할 경우 재요청 부탁드립니다.
+
 ## 👥 팀원
 
 <table border>
@@ -34,12 +36,6 @@
         <img width="100%" src="https://avatars.githubusercontent.com/u/68311202?s=96&v=4"  alt=""/>
         <a href="https://github.com/slowteady">
           <img src="https://img.shields.io/badge/이용민-1E90FF?style=flat-round&logo=GitHub&logoColor=white"/>
-        </a>
-      </td>
-      <td align="center" width="200px">
-        <img width="100%" src="https://avatars.githubusercontent.com/u/43225974?s=96&v=4"  alt=""/>
-        <a href="https://github.com/lyn94">
-          <img src="https://img.shields.io/badge/이유나-1E90FF?style=flat-round&logo=GitHub&logoColor=white"/>
         </a>
       </td>
       <td align="center" width="200px">
@@ -185,6 +181,8 @@ class CacheManager {
 
 ### 요청 최소화
 
+> ❗️ api가 호출될 때마다 console에 `calling api`가 출력되어 호출 횟수를 확인할 수 있습니다.
+
 문자를 입력할 때 마다 Http 요청을 보내는 현상을 최소화하기 위해 방법을 고민했습니다.  
 여러가지 방법들을 고민한 결과 **디바운스**와 **쓰로틀링**을 사용하는 것이 대표적인 방법이었습니다.
 
@@ -226,7 +224,7 @@ function useDebounce(value: string, timeTerm: number) {
 
 #### 2-1. input validation
 
-- 자음 또는 모음만 입력한 경우, 공백 문자만 입력한 경우 api요청을 보내지 않도록 입력값을 validation 함수로 필터링하였습니다.
+- 자음 또는 모음만 입력한 경우, 공백 문자만 입력한 경우 api요청을 보내지 않도록 입력값을 validation 함수를 사용하여 요청을 제한했습니다.
 
 #### 2-2. 구현
 
