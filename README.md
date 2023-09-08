@@ -231,21 +231,19 @@ function useDebounce(value: string, timeTerm: number) {
 #### 2-2. 구현
 
 ```ts
-export const strCheck = {
-  isEmpty: (str: string) => {
-    return str === undefined || str.trim() === '';
-  },
-  isNotEmpty: (str: string) => {
-    return !strCheck.isEmpty(str);
-  }
-};
-export const checkInputValid = (keyword: string) => {
-  const ConsonantRegex = /^[ㄱ-ㅎ]+$/;
-  const VowelRegex = /^[ㅏ-ㅣ]+$/;
-  const isInputConsonant = !ConsonantRegex.test(keyword);
-  const isInputVowel = !VowelRegex.test(keyword);
-  const isValid = isInputConsonant && isInputVowel && strCheck.isNotEmpty(keyword);
+const CONSONANT_REGEX = /^[ㄱ-ㅎ]+$/;
+const VOWEL_REGEX = /^[ㅏ-ㅣ]+$/;
+const NUMBER_REGEX = /^[0-9]+$/;
 
+export const checkInputValid = (keyword: string) => {
+  if (keyword.length === 0 || keyword.trim() === '') {
+    return;
+  }
+  const isValidConsonant = !CONSONANT_REGEX.test(keyword);
+  const isValidVowel = !VOWEL_REGEX.test(keyword);
+  const isValidNumber = !NUMBER_REGEX.test(keyword);
+
+  const isValid = isValidConsonant && isValidVowel && isValidNumber;
   return isValid;
 };
 
@@ -258,6 +256,15 @@ export const checkInputValid = (keyword: string) => {
 #### 3-2. 구현
 
 ```ts
+// useRequest 커스텀 훅
+
+const cacheManager = new CacheManager('sick-cache');
+
+export const getSearchResult = async (keyword: string): Promise<Searchdata> => {
+  const path = `/sick?q=${keyword}`;
+
+  return cacheManager.getSearchData(path);
+};
 
 ```
 
@@ -360,10 +367,14 @@ function SearchIndex() {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!e.nativeEvent.isComposing) {
+    if (!e.nativeEvent.isComposing && sicks.length > 0) {
+      const isLastIndex = focusIndex + 1 === sicks.length;
+
       switch (e.key) {
         case 'ArrowDown':
-          dispatch({ type: 'INDEX_INCREMENT' });
+          if (!isLastIndex) {
+            dispatch({ type: 'INDEX_INCREMENT' });
+          }
           break;
         case 'ArrowUp':
           dispatch({ type: 'INDEX_DECREMENT' });
