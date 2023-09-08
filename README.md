@@ -89,13 +89,13 @@ npm start
 
 ## BEST PRACTICE
 
-### 1. 로컬 캐싱
+### 로컬 캐싱
 
 캐싱 라이브러리를 사용하지 않는게 조건이었기 때문에 여러가지 방법을 생각했습니다.  
 메모리 사용, 브라우저의 로컬, 세션, 캐시 스토리지 사용 등 여러 방법을 찾았고 프로젝트의 규모를 고려했을 때,  
 브라우저의 스토리지를 사용하는게 적합하다 생각했습니다.
 
-#### 1-1. 로컬 vs 세션 vs 캐시
+#### 1. 로컬 vs 세션 vs 캐시
 
 브라우저의 어떤 스토리지를 사용하는 것이 적합할지 고민했고 각각의 특징을 찾았습니다.  
 
@@ -123,7 +123,7 @@ npm start
 용량이 작다는 단점이 있지만, 검색어 문자 보관에는 충분하다고 판단했고  
 네트워크 연결이 없을 때도 캐싱 데이터를 가져와 출력해준다는 점도 큰 이점이라 생각했습니다.
 
-#### 1-2. 구현
+#### 2. 구현
 
 ```ts
 const REQUEST_SUCCESS = 200;
@@ -178,17 +178,17 @@ class CacheManager {
 
 ```
 
-- 클래스 문법을 활용하여 한쪽에서 관리할 수 있도록 구현했습니다.
-- 캐시 데이터가 있는지 검증을 거친 후에 데이터가 없으면 새로운 요청과 캐시 저장, 데이터가 있으면 캐시 데이터를 그대로 제공하는 로직으로 구현했습니다.
+- 클래스 문법을 활용하여 캐시를 한곳에서 관리할 수 있도록 구현했습니다.
+- 만료시간이 지나지 않은 캐시 데이터가 있는지 검증을 거친 후에 데이터가 없으면 새로운 요청과 캐시 저장, 데이터가 있으면 캐시 데이터를 그대로 제공하는 로직으로 구현했습니다.
 
 > ❗️ 만료: 캐시 스토리지에 데이터를 저장할 때 만료 시간값을 같이 저장하여 만료 여부를 검증하고, 만료 되었으면 삭제 후 새로 요청하는 프로세스로 구현했습니다.
 
-### 2. 요청 최소화
+### 요청 최소화
 
 문자를 입력할 때 마다 Http 요청을 보내는 현상을 최소화하기 위해 방법을 고민했습니다.  
 여러가지 방법들을 고민한 결과 **디바운스**와 **쓰로틀링**을 사용하는 것이 대표적인 방법이었습니다.
 
-#### 2-1. 디바운스 vs 쓰로틀링
+#### 1-1. 디바운스 vs 쓰로틀링
 
 1. 디바운스
 
@@ -203,7 +203,7 @@ class CacheManager {
 검색 데이터 요청이라는 조건을 두고 생각 했을 때, 일정 주기마다 이벤트를 발생시켜 UX를 저하 시킬 수 있는 쓰로틀링에 비해  
 문자 입력 후 시간이 지난 후에 검색 데이터 요청을 하는 디바운스가 더 안정적이라고 생각했습니다.
 
-#### 2-2. 구현
+#### 1-2. 구현
 
 ```ts
 function useDebounce(value: string, timeTerm: number) {
@@ -224,14 +224,51 @@ function useDebounce(value: string, timeTerm: number) {
 
 - 확장성과 재사용성을 고려하여 Custom Hook으로 구현했습니다.
 
-### 3. 키보드를 이용한 추천 검색어 이동
+#### 2-1. input validation
+
+- 자음 또는 모음만 입력한 경우, 공백 문자만 입력한 경우 api요청을 보내지 않도록 입력값을 validation 함수로 필터링하였습니다.
+
+#### 2-2. 구현
+
+```ts
+export const strCheck = {
+  isEmpty: (str: string) => {
+    return str === undefined || str.trim() === '';
+  },
+  isNotEmpty: (str: string) => {
+    return !strCheck.isEmpty(str);
+  }
+};
+export const checkInputValid = (keyword: string) => {
+  const ConsonantRegex = /^[ㄱ-ㅎ]+$/;
+  const VowelRegex = /^[ㅏ-ㅣ]+$/;
+  const isInputConsonant = !ConsonantRegex.test(keyword);
+  const isInputVowel = !VowelRegex.test(keyword);
+  const isValid = isInputConsonant && isInputVowel && strCheck.isNotEmpty(keyword);
+
+  return isValid;
+};
+
+```
+
+#### 3-1. 캐싱데이터 활용
+
+- 요청 이전 단계에서 입력한 검색어가 캐싱되어 있는지 확인하고, 있다면 캐싱된 데이터를 불러오는 방식으로 api요청을 최소화했습니다.
+
+#### 3-2. 구현
+
+```ts
+
+```
+
+### 키보드를 이용한 추천 검색어 이동
 
 키보드를 이용하여 추천 검색어에 포커싱을 주는 것이 요구사항이었습니다.  
 추천 검색어가 리스트 형태였기 때문에 index를 이용하여 구현하는 것이 적합할 것이라 생각했습니다.  
 map 함수를 통해 index를 부여해 리스트를 렌더링하고, 키보드 이벤트를 통해 관리할 index를 매치 시켜서  
 일치 여부에 따라 포커싱을 주는 것으로 설계 후 구현했습니다.
 
-#### 3-1. 구현
+#### 1. 구현
 
 ```tsx
 import { DEFAULT_INDEX } from '../components/search/SearchIndex';
@@ -301,8 +338,9 @@ function AutoCompleteList({ sicks, isLoading, focusIndex }: ResultProps, ref: Re
 - 자식 컴포넌트에게 focusIndex를 props로 넘겨주어 map 함수를 통해 렌더링을 할 때, isFocus props로 일치 여부를 넘겨주도록 구현했습니다.
 - 자식 컴포넌트는 isFocus가 true면 포커싱 디자인을 적용합니다.
 
-### 4. STATE 관리
+### STATE 관리
 
+#### 1. 구현
 ```tsx
 function SearchIndex() {
   const [open, setOpen] = useState(false);
@@ -404,6 +442,7 @@ export const focusIndexReducer = (focusIndex: number, action: Action) => {
 
 ```
 
+#### 2. props drilling
 - 규모를 생각했을 때, 한 곳에서 state를 관리할 수 있다고 판단하여 최상위 부모 컴포넌트에서 state를 관리 하도록 구현했습니다.
 - 요청을 통해 가져올 데이터와 로딩 여부 상태는 Custom Hook을 통해 가져올 수 있도록 구현했습니다.
 - 소스의 가독성 향상과 효율을 위해 focusInput state를 reducer를 사용하여 구현했습니다.
